@@ -1,0 +1,27 @@
+{
+  "name": "edge-gif-creator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mumtaz503/no-name-bv-task.git"
+  },
+  "keywords": [
+    "gif",
+    "generator"
+  ],
+  "author": "Mumtaz503",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Mumtaz503/no-name-bv-task/issues"
+  },
+  "homepage": "https://github.com/Mumtaz503/no-name-bv-task#readme",
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "fs": "^0.0.1-security"
+  }
+}
