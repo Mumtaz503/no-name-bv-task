@@ -4,9 +4,10 @@ const path = require("path");
 
 function createGif(inputMp4, startTimestamp, endTimestamp) {
   const outputFolder = path.join(__dirname, "gif");
-  const outputFileName = path.join(outputFolder, "output33.gif");
+  const randomGifNo = Math.floor(Math.random() * 90000) + 10000;
+  const outputFileName = path.join(outputFolder, `GIF_${randomGifNo}.gif`);
   const logoPath = path.join(__dirname, "logo", "logo.jpg");
-  const command = `ffmpeg -i ${inputMp4} -ss ${startTimestamp} -to ${endTimestamp} -i ${logoPath} -filter_complex "overlay=W-w-10:H-h-10" "${outputFileName}"`;
+  const command = `ffmpeg -ss ${startTimestamp} -to ${endTimestamp} -i ${inputMp4} -i ${logoPath} -filter_complex "[0:v]scale=380:-1[trimmed_video];[trimmed_video][1:v]overlay=W-w-10:H-h-10" -crf 25 -r 12 -pix_fmt yuv420p "${outputFileName}"`;
 
   exec(command, (error, stdout, stderr) => {
     if (error) {
@@ -40,6 +41,11 @@ if (!fs.existsSync(inputFile)) {
 
 if (isNaN(startTime) || isNaN(endTime)) {
   console.error("Please enter valid starting and ending timestamps");
+  process.exit(1);
+}
+
+if (startTime >= endTime) {
+  console.error("End timestamp has to be greater than start timestamp");
   process.exit(1);
 }
 
