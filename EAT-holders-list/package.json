@@ -1,0 +1,31 @@
+{
+  "name": "eat-holders-list",
+  "version": "1.0.0",
+  "description": "Fetches the list of EAT holders on Polygon and sorts them in human readable form",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mumtaz503/no-name-bv-task.git"
+  },
+  "keywords": [
+    "EAT",
+    "Transaction",
+    "Polygon"
+  ],
+  "author": "Mumtaz503",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Mumtaz503/no-name-bv-task/issues"
+  },
+  "homepage": "https://github.com/Mumtaz503/no-name-bv-task#readme",
+  "dependencies": {
+    "@ankr.com/ankr.js": "^0.5.0",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.12.1",
+    "node-fetch": "^3.3.2",
+    "polygonscan-api": "^1.0.4"
+  }
+}
