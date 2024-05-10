@@ -1,3 +1,12 @@
+//////////////////////////////////////////////////
+//                  Remaining                   //
+//  1. Exclude the deployer from the list       //
+//  2. Make calls to EAT contract to check if a //
+//     holder actually holds EAT                //
+//  3. With the remaining list sort out top 5   //
+//     addresses                                //
+//////////////////////////////////////////////////
+
 require("dotenv").config();
 const polygonscan = require("polygonscan-api").init(
   process.env.POLYGON_SCAN_API_KEY
@@ -8,19 +17,19 @@ const fetch = require("node-fetch");
 const eatAddress = "0x7C58D971A5dAbd46BC85e81fDAE87b511431452E";
 
 async function fetchEATTransactions(contractAddress) {
-  const addressOfEatDeployer = await contractDeployer(contractAddress);
+  // const addressOfEatDeployer = await contractDeployer(contractAddress);
 
-  if (!addressOfEatDeployer) {
-    console.error("Error fetching deployer's address");
-    return;
-  }
+  // if (!addressOfEatDeployer) {
+  //   console.error("Error fetching deployer's address");
+  //   return;
+  // }
   try {
     const response = await polygonscan.account.txlist(
       contractAddress,
       1,
       "latest",
       1,
-      50, //Fetches 10000 latest transactions, Can't go above it because polygonscan API doesn't allow it
+      10000, //Fetches 10000 latest transactions, Can't go above it because polygonscan API doesn't allow it
       "desc"
     );
     if (response.status === "1") {
@@ -35,18 +44,27 @@ async function fetchEATTransactions(contractAddress) {
           const sender = transaction.from;
           const recipient = "0x" + transaction.input.slice(34, 74);
 
-          if (
-            sender === addressOfEatDeployer ||
-            recipient === addressOfEatDeployer
-          ) {
-            console.log("EAT deployer address found, skipping...");
-            return; // Skip adding the deployer address to tokenHolders set
-          }
+          const senderDescription = await contractDeployer(sender);
+          const recipientDescription = await contractDeployer(recipient);
 
-          if (!tokenHolders.has(sender)) {
+          // if (
+          //   sender === addressOfEatDeployer ||
+          //   recipient === addressOfEatDeployer
+          // ) {
+          //   console.log("EAT deployer address found, skipping...");
+          //   return; // Skip adding the deployer address to tokenHolders set
+          // }
+
+          if (
+            !tokenHolders.has(sender) &&
+            senderDescription.startsWith("No data")
+          ) {
             tokenHolders.add(sender);
           }
-          if (!tokenHolders.has(recipient)) {
+          if (
+            !tokenHolders.has(recipient) &&
+            recipientDescription.startsWith("No data")
+          ) {
             tokenHolders.add(recipient);
           }
         }
@@ -82,7 +100,7 @@ const contractDeployer = async (contractAddress) => {
 
     if (data.status === "1" && data.result.length > 0) {
       const deployerAddress = data.result[0].contractCreator;
-      console.log("EAT Deployer Address: ", deployerAddress);
+      console.log("Deployer Address: ", deployerAddress);
       return deployerAddress; //Returns the deployer's address if the request is successful and returns the data
     } else {
       console.error("Error: ", data.message);
@@ -91,14 +109,6 @@ const contractDeployer = async (contractAddress) => {
   } catch (e) {
     console.error("Error fetching request: ", e);
     return null; // returns null if can't make a request to the API.
-  }
-};
-
-const isWalletAddress = async (address) => {
-  try {
-    const response = await polygonscan.account.txlistinternal(address);
-  } catch (e) {
-    console.error("Error with fetch request: ", e);
   }
 };
 
