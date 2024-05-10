@@ -25,7 +25,7 @@
     "@ankr.com/ankr.js": "^0.5.0",
     "dotenv": "^16.4.5",
     "ethers": "^6.12.1",
-    "node-fetch": "^3.3.2",
+    "node-fetch": "^2.7.0",
     "polygonscan-api": "^1.0.4"
   }
 }
