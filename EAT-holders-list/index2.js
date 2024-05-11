@@ -1,39 +1,31 @@
-const fetch = require("node-fetch");
 require("dotenv").config();
-const polygonscan = require("polygonscan-api").init(
-  process.env.POLYGON_SCAN_API_KEY
-);
+const ethers = require("ethers");
 
-const address = "0xed8dba880d44cf954769474124141325c6430fd3";
-
-const isWalletAddress = async (address) => {
-  const contDeployer = await deployer(address);
-  if (contDeployer) {
-    return false;
-  } else {
-    return true;
-  }
-};
-
-const deployer = async (contractAddress) => {
+async function fetchData(contractAddress, walletAddress) {
+  let contractABI;
   try {
-    const url = `https://api.polygonscan.com/api?module=contract&action=getcontractcreation&contractaddresses=${contractAddress}&apikey=${process.env.POLYGON_SCAN_API_KEY}`;
-
-    const response = await fetch(url); //Makes the call using node-fetch module
-    const data = await response.json(); //Converts the data into a json object to read from
+    const url = `https://api.polygonscan.com/api?module=contract&action=getabi&address=${contractAddress}&apikey=${process.env.POLYGON_SCAN_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
 
     if (data.status === "1" && data.result.length > 0) {
-      const deployerAddress = data.result[0].contractCreator;
-      console.log("EAT Deployer Address: ", deployerAddress);
-      return deployerAddress; //Returns the deployer's address if the request is successful and returns the data
+      contractABI = JSON.parse(data.result);
+      // console.log("ABI: ", contractABI);
     } else {
       console.error("Error: ", data.message);
-      return data.message; //Returns 'No data found' if the address is not of a contract
     }
-  } catch (e) {
-    console.error("Error fetching request: ", e);
-    return null; // returns null if can't make a request to the API.
+  } catch (error) {
+    console.error("Error fetching data: ", error);
   }
-};
 
-isWalletAddress(address);
+  const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC_URL);
+  const wallet = new ethers.Wallet(process.env.POLYGON_PRIVATE_KEY, provider);
+  const eatToken = new ethers.Contract(contractAddress, contractABI, wallet);
+
+  const walletBalance = await eatToken.balanceOf(walletAddress);
+}
+
+// Call the function to fetch data for all pages
+const contAddress = "0x7C58D971A5dAbd46BC85e81fDAE87b511431452E";
+const walAddr = "0x8f625df4c9e4878313635cb0a86ae9e230365a7c";
+fetchData(contAddress, walAddr);

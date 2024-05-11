@@ -13,16 +13,21 @@ const polygonscan = require("polygonscan-api").init(
 );
 const fs = require("fs");
 const fetch = require("node-fetch");
+const ethers = require("ethers");
 
 const eatAddress = "0x7C58D971A5dAbd46BC85e81fDAE87b511431452E";
 
 async function fetchEATTransactions(contractAddress) {
-  // const addressOfEatDeployer = await contractDeployer(contractAddress);
+  //Grabs the address of the contract deployer and saves it as this variable
+  const addressOfEatDeployer = await contractDeployer(contractAddress);
 
-  // if (!addressOfEatDeployer) {
-  //   console.error("Error fetching deployer's address");
-  //   return;
-  // }
+  //Exits the function call if the deployer's address can't be found
+  if (!addressOfEatDeployer) {
+    console.error("Error fetching deployer's address");
+    return;
+  }
+
+  //Makes a call to polygonscan API for 'account' module with 'txlist' action
   try {
     const response = await polygonscan.account.txlist(
       contractAddress,
@@ -32,52 +37,68 @@ async function fetchEATTransactions(contractAddress) {
       10000, //Fetches 10000 latest transactions, Can't go above it because polygonscan API doesn't allow it
       "desc"
     );
+
     if (response.status === "1") {
       const transactions = response.result;
 
+      //Creates a new set for token holders
       const tokenHolders = new Set();
 
+      // for-of loop to allow the usage of 'await' inside the loop
       for (const transaction of transactions) {
+        //Fetches only the transactions related to transfers
+        //ERC20 transfer signature hash always starts with 0xa9059cbb
         if (transaction.input.startsWith("0xa9059cbb")) {
-          //Fetches only the transactions related to transfers
-          //ERC20 transfer signature hash always starts with 0xa9059cbb
+          //Extracts the senders and recipients from the transfer function calls
           const sender = transaction.from;
           const recipient = "0x" + transaction.input.slice(34, 74);
 
+          //Checks if the sender or recipient are contracts or wallet
           const senderDescription = await contractDeployer(sender);
           const recipientDescription = await contractDeployer(recipient);
 
-          // if (
-          //   sender === addressOfEatDeployer ||
-          //   recipient === addressOfEatDeployer
-          // ) {
-          //   console.log("EAT deployer address found, skipping...");
-          //   return; // Skip adding the deployer address to tokenHolders set
-          // }
+          if (
+            sender === addressOfEatDeployer ||
+            recipient === addressOfEatDeployer
+          ) {
+            console.log("EAT deployer address found, skipping...");
+            continue; // Skip adding the deployer address to tokenHolders set
+          }
 
+          //Checks if a given address is already in the list and is not a smart contract (or is a wallet address)
           if (
             !tokenHolders.has(sender) &&
-            senderDescription.startsWith("No data")
+            senderDescription.startsWith("No data") &&
+            balance(sender, contractAddress) > 0
           ) {
             tokenHolders.add(sender);
           }
           if (
             !tokenHolders.has(recipient) &&
-            recipientDescription.startsWith("No data")
+            recipientDescription.startsWith("No data") &&
+            balance(recipient, contractAddress) > 0
           ) {
             tokenHolders.add(recipient);
           }
         }
       }
+
+      //Adds that address to the array
       const tokenHolderAddresses = Array.from(tokenHolders);
       console.log("Token holder array length: ", tokenHolderAddresses.length);
-      fs.writeFile("Toke_Holders.txt", tokenHolderAddresses.join("\n"), (e) => {
-        if (e) {
-          console.error("error writing file: ", e);
-        } else {
-          console.log("token holder addresses successfuly written");
+
+      //Writes the extracted addresses array to a 'Token_Holders.txt' file
+      fs.writeFile(
+        "Token_Holders2.txt",
+        tokenHolderAddresses.join("\n"),
+        (e) => {
+          if (e) {
+            console.error("error writing file: ", e);
+          } else {
+            console.log("token holder addresses successfuly written");
+          }
         }
-      });
+      );
     } else {
       console.error("Error:", response.message);
     }
@@ -95,21 +116,55 @@ const contractDeployer = async (contractAddress) => {
   try {
     const url = `https://api.polygonscan.com/api?module=contract&action=getcontractcreation&contractaddresses=${contractAddress}&apikey=${process.env.POLYGON_SCAN_API_KEY}`;
 
-    const response = await fetch(url); //Makes the call using node-fetch module
-    const data = await response.json(); //Converts the data into a json object to read from
+    //Makes the call using node-fetch module
+    const response = await fetch(url);
+
+    //Converts the data into a json object to read from
+    const data = await response.json();
 
     if (data.status === "1" && data.result.length > 0) {
       const deployerAddress = data.result[0].contractCreator;
       console.log("Deployer Address: ", deployerAddress);
-      return deployerAddress; //Returns the deployer's address if the request is successful and returns the data
+
+      //Returns the deployer's address if the request is successful and returns the data
+      return deployerAddress;
     } else {
       console.error("Error: ", data.message);
-      return data.message; //Returns 'No data found' if the address is not of a contract
+
+      //Returns 'No data found' if the address is not of a contract
+      return data.message;
     }
   } catch (e) {
     console.error("Error fetching request: ", e);
-    return null; // returns null if can't make a request to the API.
+
+    // returns null if can't make a request to the API.
+    return null;
   }
+};
+
+const balance = async (walletAddress, contractAddress) => {
+  let contractABI;
+  try {
+    const url = `https://api.polygonscan.com/api?module=contract&action=getabi&address=${contractAddress}&apikey=${process.env.POLYGON_SCAN_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.status === "1" && data.result.length > 0) {
+      contractABI = JSON.parse(data.result);
+      // console.log("ABI: ", contractABI);
+    } else {
+      console.error("Error: ", data.message);
+    }
+  } catch (error) {
+    console.error("Error fetching data: ", error);
+  }
+
+  const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC_URL);
+  const wallet = new ethers.Wallet(process.env.POLYGON_PRIVATE_KEY, provider);
+  const eatToken = new ethers.Contract(contractAddress, contractABI, wallet);
+
+  const walletBalance = await eatToken.balanceOf(walletAddress);
+  return walletBalance;
 };
 
 fetchEATTransactions(eatAddress);
