@@ -4,6 +4,7 @@
 .encryptedKey.json
 ethereum.js
 settings.json
+index3.js
 
 # dependencies
 /node_modules

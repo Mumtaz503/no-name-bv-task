@@ -23,9 +23,10 @@
   "homepage": "https://github.com/Mumtaz503/no-name-bv-task#readme",
   "dependencies": {
     "@ankr.com/ankr.js": "^0.5.0",
+    "@covalenthq/client-sdk": "^1.0.2",
     "axios": "^1.6.8",
     "dotenv": "^16.4.5",
-    "ethers": "^6.12.1",
+    "ethers": "5.7.2",
     "node-fetch": "^2.7.0",
     "polygonscan-api": "^1.0.4"
   }
