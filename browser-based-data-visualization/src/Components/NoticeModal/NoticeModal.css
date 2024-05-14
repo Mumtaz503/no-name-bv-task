@@ -1,0 +1,10 @@
+.modal--close {
+  width: 100px;
+  height: 35px;
+  cursor: pointer;
+  background-color: #f55a5a;
+  border-width: 0px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+}

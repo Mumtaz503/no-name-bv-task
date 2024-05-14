@@ -1,0 +1,23 @@
+.navbar {
+  height: 55px;
+  background-color: #f55a5a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar p {
+  color: #fff;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: -1.07px;
+}
+
+nav {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
