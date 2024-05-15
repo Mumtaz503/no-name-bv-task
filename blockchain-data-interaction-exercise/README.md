@@ -2,27 +2,27 @@
 
 The following node.js application is an exercise for Polygon data interaction. Here are the key features:
 
- 1. Fetches the token holder's list of EAT using Covalent API.
- 2. Excludes the contract deployer and contract addresses from that list.
- 3. Fetch the transaction history of each of those wallet addresses.
- 4. Sort that list in descending order based on the highest number of transactions to lowest number of transactions on EAT contract.
- 5. Gets the top 5 wallet addresses from that list.
+1.  Fetches the token holder's list of EAT using Covalent API.
+2.  Excludes the contract deployer and contract addresses from that list.
+3.  Fetch the transaction history of each of those wallet addresses.
+4.  Sort that list in descending order based on the highest number of transactions to lowest number of transactions on EAT contract.
+5.  Gets the top 5 wallet addresses from that list.
 
-##  Libraries/Frameworks used
+## Libraries/Frameworks used
 
 I used the following Libraries for the project:
 
- 1. polygonscan-api: To make API calls to Polygonscan network.
- 2. node-fetch: To make API calls to Polygonscan network using url (for modules that could not be reached using polygonscan-api).
- 3. covalenthq-client: To fetch Token holders list quickly for EAT.
+1.  polygonscan-api: To make API calls to Polygonscan network.
+2.  node-fetch: To make API calls to Polygonscan network using url (for modules that could not be reached using polygonscan-api).
+3.  covalenthq-client: To fetch Token holders list quickly for EAT.
 
 ## Data filteration
 
-When the application makes a call to the Covalent API, it gets a raw data in JSON format with information regarding the 'contract details', 'block height', 'contract logo' and the 'addresses that hold EAT tokens' along with their 'balances'. This includes smart contracts and wallet addresses on Polygon mainnet. 
+When the application makes a call to the Covalent API, it gets a raw data in JSON format with information regarding the 'contract details', 'block height', 'contract logo' and the 'addresses that hold EAT tokens' along with their 'balances'. This includes smart contracts and wallet addresses on Polygon mainnet.
 
 ### Exluding the contract deployer
 
-However, the first thing to do here was to identify and exclude the EAT deployer's address from the data. I made a call to Polygonscan API using node-fetch in the function `contractDeployer`. 
+However, the first thing to do here was to identify and exclude the EAT deployer's address from the data. I made a call to Polygonscan API using node-fetch in the function `contractDeployer`.
 
 This function takes a contract address as a parameter and returns the address of the contract deployer.
 
@@ -40,7 +40,7 @@ If an address is a wallet address the API call will return the string `No data f
 
 ### Fetch transaction histories of wallet addresses
 
-Before fetching the transaction histories of the wallet address in the loop I have to delay the API call for another 200ms to avoid the Polygonscan limit. 
+Before fetching the transaction histories of the wallet address in the loop I have to delay the API call for another 200ms to avoid the Polygonscan limit.
 
 I then fetch the transaction history of the wallet address in the loop by making a call to Polygonscan API using 'polygonscan-api' library returned by the function `eatTransactionHistory`.
 
@@ -54,9 +54,12 @@ Once the addresses array has all the data of transactions, the function then sor
 
 The function then extracts the data of top 5 wallets using javascript `slice` method.
 
-
 **The function then appends the data into `Top5_Wallet_tx_Histories.txt` file with the human readable data of 'Wallet number', 'Wallet Address' and 'Total Aransactions'.**
 
 ## Note
 
-The application doesn't directly connect to Polygon mainnet to fetch the results as it is not a viable solution with the existing libraries such as 'ethers.js' or 'web3.js'.
+The application doesn't directly connect to Polygon mainnet to fetch the results as it is not a viable solution with the existing libraries such as 'ethers.js' or 'web3.js' and RPC Endpoint providers like Infura or Alchemy.
+
+It typically involves fetching transfer events data, sorting those events to get `from` and `to` user data and then calling the `balanceOf` function to double check the data and then separating the contract addresses from wallet addresses.
+
+My current approach using 'Covalent API' is much faster and feasible.
